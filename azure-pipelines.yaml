@@ -13,4 +13,4 @@ steps:
      arguments: 'restore'
 
  - script: |
-    dotnet tool run cake
+    dotnet cake
