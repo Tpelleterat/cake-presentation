@@ -1,10 +1,19 @@
+#tool "dotnet:?package=GitVersion.Tool&version=5.8.1"
+#tool nuget:?package=MSBuild.SonarQube.Runner.Tool&version=4.8.0
+#addin nuget:?package=Cake.Sonar&version=1.1.29
+#addin nuget:?package=Cake.Docker&version=1.1.0
+
 ///////////////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 ///////////////////////////////////////////////////////////////////////////////
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var projectName = "UserManagement.sln";
+var disableSonar = HasArgument("disableSonar");
+var solutionName = "UserManagement.sln";
+var version = string.Empty;
+var dockerImageName = "usermanagementapi";
+var dockerRepository = Argument("repository", "cakebuildregistry.azurecr.io");
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -25,24 +34,93 @@ Teardown(ctx =>
 // TASKS
 ///////////////////////////////////////////////////////////////////////////////
 
+Task("Version")
+   .Does(() => {
+      version = GitVersion().SemVer;
+
+      Information(version);
+   });
+
+Task("Restore")
+   .Does(() => {
+      DotNetRestore(solutionName);
+   });
+
 Task("Build")
    .Does(() => {
-      DotNetBuild(projectName, new DotNetBuildSettings{
+      DotNetBuild(".", new DotNetBuildSettings{
          Configuration = configuration
       });
    });
 
 Task("Test")
    .Does(() => {
-      DotNetTest(projectName, new DotNetTestSettings{
+      DotNetTest(".", new DotNetTestSettings{
          Configuration = configuration,
          NoBuild= true
       });
    });
 
+Task("Publish")
+   .Does(() => {
+      DotNetPublish(solutionName, new DotNetPublishSettings{
+         Configuration = configuration,
+         OutputDirectory = "build/publish",
+      });
+   });
+
+Task("Docker build")
+   .Does(() => {
+
+      var settings = new DockerImageBuildSettings{
+            Tag = new string[]{$"{dockerRepository}/{dockerImageName}:{version}"},
+            Rm = true
+        };
+
+      DockerBuild(settings, ".");
+   });
+
+Task("Docker push")
+   .WithCriteria(!BuildSystem.IsLocalBuild)
+   .Does(() => {
+
+      DockerPush($"{dockerRepository}/{dockerImageName}:{version}");
+
+   });
+
+Task("SonarBegin")
+   .ContinueOnError()
+   .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
+   .Does(() => {
+      SonarBegin(new SonarBeginSettings{
+         Key = "MyProject",
+         Url = "sonarcube.contoso.local",
+         Login = "admin",
+         Password = "admin",
+         Verbose = true
+         });
+      });
+
+Task("SonarEnd")
+   .ContinueOnError()
+   .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
+   .Does(() => {
+      SonarEnd(new SonarEndSettings{
+         Login = "admin",
+         Password = "admin"
+      });
+   });
+
 Task("Default")
+   .IsDependentOn("Version")
+   .IsDependentOn("SonarBegin")
+   .IsDependentOn("Restore")
    .IsDependentOn("Build")
    .IsDependentOn("Test")
+   .IsDependentOn("SonarEnd")
+   .IsDependentOn("Publish")
+   .IsDependentOn("Docker build")
+   .IsDependentOn("Docker push")
    .Does(() => {
       Information("Default Task ended");
    });
