@@ -25,5 +25,7 @@ steps:
     command: login
     containerRegistry: cakebuildregistry
 
- - script: |
-    dotnet cake -sonarlogin $(sonarlogin) -sonarpass $(sonarpassword)
+ - bash: |
+    dotnet cake -dockerregistry $(registryurl) -sonarlogin ${sonarlogin}
+   env:
+    SONAR_PASSWORD: $(sonarpassword)

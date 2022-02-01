@@ -10,12 +10,12 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var sonarLogin = Argument("sonarlogin", string.Empty);
-var sonarPassword = Argument("sonarpass", string.Empty);
+var sonarPassword = EnvironmentVariable("SONAR_PASSWORD");
 var disableSonar = HasArgument("disableSonar");
 var solutionName = "UserManagement.sln";
 var version = string.Empty;
 var dockerImageName = "usermanagementapi";
-var dockerRepository = Argument("repository", "cakebuildregistry.azurecr.io");
+var dockerRegistry = Argument("dockerregistry", "local");
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
@@ -42,6 +42,14 @@ Task("Version")
       version = GitVersion().SemVer;
 
       Information(version);
+   });
+
+Task("Build name")
+   .Does(() => {
+      if(BuildSystem.IsRunningOnAzurePipelines)
+      {
+         BuildSystem.AzurePipelines.Commands.UpdateBuildNumber($"User Management version {version}");
+      }
    });
 
 Task("Restore")
@@ -76,7 +84,7 @@ Task("Docker build")
    .Does(() => {
 
       var settings = new DockerImageBuildSettings{
-            Tag = new string[]{$"{dockerRepository}/{dockerImageName}:{version}"},
+            Tag = new string[]{$"{dockerRegistry}/{dockerImageName}:{version}"},
             Rm = true
         };
 
@@ -87,7 +95,7 @@ Task("Docker push")
    .WithCriteria(!BuildSystem.IsLocalBuild)
    .Does(() => {
 
-      DockerPush($"{dockerRepository}/{dockerImageName}:{version}");
+      DockerPush($"{dockerRegistry}/{dockerImageName}:{version}");
 
    });
 
@@ -96,6 +104,9 @@ Task("SonarBegin")
    .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
    .Does(() => {
       Information($"Sonar login {sonarLogin}, password {sonarPassword}");
+      if(!string.IsNullOrEmpty(sonarPassword)){
+         Information("Password loaded");
+      }
 
       SonarBegin(new SonarBeginSettings{
          Key = "MyProject",
@@ -118,6 +129,7 @@ Task("SonarEnd")
 
 Task("Default")
    .IsDependentOn("Version")
+   .IsDependentOn("Build name")
    .IsDependentOn("SonarBegin")
    .IsDependentOn("Restore")
    .IsDependentOn("Build")
