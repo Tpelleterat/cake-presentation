@@ -26,6 +26,6 @@ steps:
     containerRegistry: cakebuildregistry
 
  - bash: |
-    dotnet cake --sonarlogin=$(sonarlogin)
+    dotnet cake --disableSonar --sonarlogin=$(sonarlogin)
    env:
     SONAR_PASSWORD: $(sonarpassword)
