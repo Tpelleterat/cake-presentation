@@ -34,6 +34,7 @@ Teardown(ctx =>
 
 Task("Default")
    .IsDependentOn("Version")
+   .IsDependentOn("Build name")
    .IsDependentOn("Restore")
    .IsDependentOn("Build")
    .IsDependentOn("Test")
@@ -46,6 +47,14 @@ Task("Version")
       version = GitVersion().SemVer;
 
       Information(version);
+   });
+
+Task("Build name")
+   .Does(() => {
+      if(BuildSystem.IsRunningOnAzurePipelines)
+      {
+         BuildSystem.AzurePipelines.Commands.UpdateBuildNumber($"User Management version {version}");
+      }
    });
 
 Task("Restore")
