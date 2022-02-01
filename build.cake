@@ -15,7 +15,7 @@ var disableSonar = HasArgument("disableSonar");
 var solutionName = "UserManagement.sln";
 var version = string.Empty;
 var dockerImageName = "usermanagementapi";
-var dockerRegistry = Argument("dockerregistryname", "local");
+var dockerRegistry = Argument("dockerregistry", "cakebuildregistry.azurecr.io");
 
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
