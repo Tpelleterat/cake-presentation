@@ -18,6 +18,14 @@ var dockerImageName = "usermanagementapi";
 var dockerRegistry = Argument("dockerregistry", "cakebuildregistry.azurecr.io");
 
 ///////////////////////////////////////////////////////////////////////////////
+// METHODS
+///////////////////////////////////////////////////////////////////////////////
+
+private string BuildImageTag(){
+   return $"{dockerRegistry}/{dockerImageName}:{version}";
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -84,7 +92,7 @@ Task("Docker build")
    .Does(() => {
 
       var settings = new DockerImageBuildSettings{
-            Tag = new string[]{$"{dockerRegistry}/{dockerImageName}:{version}"},
+            Tag = new string[]{BuildImageTag()},
             Rm = true
         };
 
@@ -95,7 +103,7 @@ Task("Docker push")
    .WithCriteria(!BuildSystem.IsLocalBuild)
    .Does(() => {
 
-      DockerPush($"{dockerRegistry}/{dockerImageName}:{version}");
+      DockerPush(BuildImageTag());
 
    });
 
@@ -104,9 +112,6 @@ Task("SonarBegin")
    .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
    .Does(() => {
       Information($"Sonar login {sonarLogin}, password {sonarPassword}");
-      if(!string.IsNullOrEmpty(sonarPassword)){
-         Information("Password loaded");
-      }
 
       SonarBegin(new SonarBeginSettings{
          Key = "MyProject",
