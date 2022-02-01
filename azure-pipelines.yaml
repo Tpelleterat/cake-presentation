@@ -1,6 +1,9 @@
 trigger:
 - main
 
+variables:
+- group: CakeBuildLib
+
 pool:
   vmImage: 'ubuntu-18.04'
 
@@ -23,4 +26,4 @@ steps:
     containerRegistry: cakebuildregistry
 
  - script: |
-    dotnet cake
+    dotnet cake -sonarlogin $(sonarlogin) -sonarpassword $(sonarpassword)

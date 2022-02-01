@@ -9,11 +9,14 @@
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
+var sonarLogin = Argument("sonarlogin", string.Empty);
+var sonarPassword = Argument("sonarpassword", string.Empty);
 var disableSonar = HasArgument("disableSonar");
 var solutionName = "UserManagement.sln";
 var version = string.Empty;
 var dockerImageName = "usermanagementapi";
 var dockerRepository = Argument("repository", "cakebuildregistry.azurecr.io");
+
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,11 +95,13 @@ Task("SonarBegin")
    .ContinueOnError()
    .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
    .Does(() => {
+      Information($"Sonar login {sonarLogin}, password {sonarPassword}");
+
       SonarBegin(new SonarBeginSettings{
          Key = "MyProject",
          Url = "sonarcube.contoso.local",
-         Login = "admin",
-         Password = "admin",
+         Login = sonarLogin,
+         Password = sonarPassword,
          Verbose = true
          });
       });
@@ -106,8 +111,8 @@ Task("SonarEnd")
    .WithCriteria(() => !BuildSystem.IsLocalBuild && !disableSonar)
    .Does(() => {
       SonarEnd(new SonarEndSettings{
-         Login = "admin",
-         Password = "admin"
+         Login = sonarLogin,
+         Password = sonarPassword
       });
    });
 
