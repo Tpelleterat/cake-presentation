@@ -12,6 +12,15 @@ var solutionName = "UserManagement.sln";
 var version = string.Empty;
 var dockerImageName = "usermanagementapi";
 var dockerRegistry = Argument("dockerregistry", "cakebuildregistry.azurecr.io");
+
+///////////////////////////////////////////////////////////////////////////////
+// METHODS
+///////////////////////////////////////////////////////////////////////////////
+
+private string BuildImageTagName(){
+   return $"{dockerRegistry}/{dockerImageName}:{version}";
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,6 +49,7 @@ Task("Default")
    .IsDependentOn("Test")
    .IsDependentOn("Publish")
    .IsDependentOn("Docker build")
+   .IsDependentOn("Docker push")
 ;
 
 Task("Version")
@@ -90,11 +100,19 @@ Task("Docker build")
    .Does(() => {
 
       var settings = new DockerImageBuildSettings{
-            Tag = new string[]{$"{dockerRegistry}/{dockerImageName}:{version}"},
+            Tag = new string[]{BuildImageTagName()},
             Rm = true
         };
 
       DockerBuild(settings, ".");
+   });
+
+Task("Docker push")
+   .WithCriteria(!BuildSystem.IsLocalBuild)
+   .Does(() => {
+
+      DockerPush(BuildImageTagName());
+   
    });
 
 RunTarget(target);
