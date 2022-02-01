@@ -145,7 +145,7 @@ Task("Default")
    .IsDependentOn("Docker push")
    .Does(() => {
       Information("Default Task ended");
-   });
+   })
    ;
 
 RunTarget(target);
