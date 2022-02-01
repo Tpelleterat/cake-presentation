@@ -1,31 +1,20 @@
 trigger:
-- main
-
-variables:
-- group: CakeBuildLib
-
+  - main
+  
 pool:
   vmImage: 'ubuntu-18.04'
 
 steps:
- - task: UseDotNet@2
-   inputs:
-    version: '6.0.x'
+  - task: UseDotNet@2
+    inputs:
+      version: '6.0.x'
 
- - task: DotNetCoreCLI@2
-   displayName: 'Restore dotnet tools'
-   inputs:
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore dotnet tools'
+    inputs:
      command: 'custom'
      custom: 'tool'
      arguments: 'restore'
 
- - task: Docker@2
-   displayName: Login to ACR
-   inputs:
-    command: login
-    containerRegistry: cakebuildregistry
-
- - bash: |
-    dotnet cake --disableSonar --sonarlogin=$(sonarlogin)
-   env:
-    SONAR_PASSWORD: $(sonarpassword)
+  - bash: |
+     dotnet cake
