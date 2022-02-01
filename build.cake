@@ -10,7 +10,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var sonarLogin = Argument("sonarlogin", string.Empty);
-var sonarPassword = Argument("sonarpassword", string.Empty);
+var sonarPassword = Argument("sonarpass", string.Empty);
 var disableSonar = HasArgument("disableSonar");
 var solutionName = "UserManagement.sln";
 var version = string.Empty;

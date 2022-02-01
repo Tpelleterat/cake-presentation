@@ -26,4 +26,4 @@ steps:
     containerRegistry: cakebuildregistry
 
  - script: |
-    dotnet cake -sonarlogin $(sonarlogin) -sonarpassword $(sonarpassword)
+    dotnet cake -sonarlogin $(sonarlogin) -sonarpass $(sonarpassword)
